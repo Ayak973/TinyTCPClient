@@ -11,9 +11,11 @@
 #include <thread>
 #include <mutex>
 
-#include<sys/socket.h>	//socket
-#include<arpa/inet.h>	//inet_addr
-#include<netdb.h>	//hostent
+#include <sys/socket.h>	//socket
+#include <arpa/inet.h>	//inet_addr
+#include <netdb.h>	//hostent
+#include <unistd.h>
+
 
 using std::cout;
 using std::endl;
@@ -34,14 +36,14 @@ int main(int argc, char** argv) {
     cout << "Starting client..." << endl;
     
     //socket file descriptor array
-    std::array<int, parallelJobsCount> fdArray = { 0 };
     std::array<std::thread, parallelJobsCount> threadArray;
     
-    //
+    //starting threads
     for (unsigned int i = 0; i < parallelJobsCount; ++i) {
         threadArray[i] = std::thread(sendAndReceive, i);
     }
 
+    //waiting for threads to finish
     for (unsigned int i = 0; i < parallelJobsCount; ++i) {
         if (threadArray[i].joinable()) threadArray[i].join();
     }
@@ -58,15 +60,14 @@ void sendAndReceive(unsigned int threadId) {
     int clientfd = -1;
     
     clientfd = createSocketAndConnect(error);
-    if (clientfd < 0) {
+    if (clientfd == false) {
         blockingPrint("Thread #" + std::to_string(threadId) + " error: " + error + " !");
         return;
     }
     
     
     
-    
-    close(fd);
+    close(clientfd);
     
     blockingPrint("Thread #" + std::to_string(threadId) + " stopped !");
 }
