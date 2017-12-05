@@ -1,25 +1,18 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /* 
  * File:   main.cpp
  * Author: ayak973
  *
- * Created on December 5, 2017, 7:18 PM
+ * Created on December 5, 2017, 19:01
  */
 
-#include <cstdlib>
+#include <iostream>
 
-using namespace std;
+using std::cout;
+using std::endl;
 
-/*
- * 
- */
+
 int main(int argc, char** argv) {
-
+    cout << "here" << endl;
     return 0;
 }
 
