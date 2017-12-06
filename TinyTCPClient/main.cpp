@@ -16,20 +16,22 @@
 #include <netdb.h>	//hostent
 #include <unistd.h>
 
+#include "socket.h"
 
 using std::cout;
 using std::endl;
 
 static const unsigned int parallelJobsCount = 4;
-static const int port = 8080;
-static const std::string host = "127.0.0.1";
-static const std::string sendStr = "Hello";
+static const int port = 80;
+static const std::string host = "192.168.16.237";
+static const std::string sendStr = "GET / HTTP/1.1\r\nHost: notknownhost\r\nUser-Agent: TinyTCPClient alpha\r\n\r\n";
 
 //std::cout synchronization
 std::mutex printMtx;
 
 void sendAndReceive(unsigned int threadId);
-bool createSocketAndConnect(std::string& error);
+int createSocketAndConnect(std::string& error);
+int sendAll(int s, const char* buf, int &len);
 void blockingPrint(const std::string& str);
 
 int main(int argc, char** argv) {
@@ -60,30 +62,44 @@ void sendAndReceive(unsigned int threadId) {
     int clientfd = -1;
     
     clientfd = createSocketAndConnect(error);
-    if (clientfd == false) {
+    if (clientfd < 0) {
         blockingPrint("Thread #" + std::to_string(threadId) + " error: " + error + " !");
         return;
     }
     
+    int sendLen = sendStr.length();
+    
+    if (sendAll(clientfd, sendStr.c_str(), sendLen) == -1) {
+        blockingPrint("Thread #" + std::to_string(threadId) + " cannot sendAll !");
+        return;
+    }
     
     
-    close(clientfd);
+    if (clientfd > -1) close(clientfd);
     
     blockingPrint("Thread #" + std::to_string(threadId) + " stopped !");
 }
 
-bool createSocketAndConnect(std::string& error) {
-    int fd = socket(AF_INET , SOCK_STREAM , 0);
+int createSocketAndConnect(std::string& error) {
+    int fd = ::socket(AF_INET , SOCK_STREAM , 0);
     
     if (fd < 0) {
         error = "cannot create socket";
-        return false;
+        return -1;
     }
     
+    struct sockaddr_in serverAddr = { 0 };
+    serverAddr.sin_family       = AF_INET;
+    serverAddr.sin_port         = htons(port);
+    serverAddr.sin_addr.s_addr  = inet_addr(host.c_str());
     
+    if (::connect(fd, (struct sockaddr*) &serverAddr, sizeof(struct sockaddr)) == -1) {
+        ::close(fd);
+        error = "connect() failed";
+        return -1;        
+    }
     
-    
-    return true;
+    return fd;
 }
 
 void blockingPrint(const std::string& str) {
@@ -91,3 +107,19 @@ void blockingPrint(const std::string& str) {
     cout << str << endl;
 }
 
+int sendAll(int sock, const char* buf, int &len) {
+    int total = 0;
+    int bytesleft = len;
+    int n;
+    
+    while (total < len && bytesleft > 0) {
+        n = ::send(sock, buf + total, bytesleft, 0);
+        if (n == -1) { break; }
+        total += n;
+        bytesleft -= n;
+    }
+    
+    len = total;
+    
+    return (n == -1) ? -1 : 0;
+}
