@@ -18,11 +18,11 @@ namespace tinytcp {
             int _fd;
             
         protected:
-            Socket(int sockfd);
-            int getSocket() const { return _fd; }
+            Socket(int type, int domain, int protocol);
+            int getSocket() const;
             
         public:
-            ~Socket();
+            virtual ~Socket();
             
             //can move
             Socket(Socket&& socket)                 noexcept;
@@ -30,11 +30,24 @@ namespace tinytcp {
             void swap(Socket& other)                noexcept;
             
             //cannot copy
-            Socket(Socket const&)               = delete;
-            Socket& operator=(Socket const&)    = delete;
+            Socket(Socket const&)                   = delete;
+            Socket& operator=(Socket const&)        = delete;
             
             void close();
     };
+    
+//    class RWSocket : public BaseSocket {
+//        private:
+//            
+//            
+//        protected:
+//            
+//            
+//        public:
+//            
+//        
+//        
+//    };
 }
 
 
