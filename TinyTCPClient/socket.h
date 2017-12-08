@@ -1,8 +1,8 @@
 /* 
- * File:   nethelper.h
+ * File:   socket.h
  * Author: ayak973
  *
- * Created on 23 juillet 2017, 22:14
+ * Created on 1 décembre 2017, 22:14
  */
 
 #ifndef SOCKET_H
@@ -18,8 +18,9 @@ namespace tinytcp {
             int _fd;
             
         protected:
-            Socket(int type, int domain, int protocol);
+            Socket(int fd);
             int getSocket() const;
+            static constexpr int _fdInvalid = -1;
             
         public:
             virtual ~Socket();
@@ -36,18 +37,26 @@ namespace tinytcp {
             void close();
     };
     
-//    class RWSocket : public BaseSocket {
-//        private:
-//            
-//            
-//        protected:
-//            
-//            
-//        public:
-//            
-//        
-//        
-//    };
+    class RWSocket : public Socket {
+        private:
+                       
+        protected:
+                        
+        public:
+            RWSocket(int fd);
+        
+            std::size_t getData(char* buffer, std::size_t maxLen);
+            void putData(const char* buffer, std::size_t len);
+    };
+    
+    class ConnectedSocket : public RWSocket {
+        private:
+        
+        protected:
+            
+        public:
+            ConnectedSocket(const std::string& host, const int port);
+    };
 }
 
 
