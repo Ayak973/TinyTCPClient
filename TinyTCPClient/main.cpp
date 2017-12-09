@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 //#include "socket.h"
-#include "stringhelper.h"
+//#include "stringhelper.h"
 #include "socket.h"
 
 using std::cout;
@@ -61,17 +61,19 @@ int main(int argc, char** argv) {
 }
 
 void sendAndReceive(unsigned int threadId) {
-    blockingPrint("Starting thread #" + std::to_string(threadId) + "...");
-    
-    tinytcp::ConnectedSocket connect(host, port);
-    
-    static const int bufferMaxLen = 4096;
-    std::array<char, bufferMaxLen> buffer = { 0 };
-    
-    connect.putData(sendStr.c_str(), sendStr.size());
-    connect.getData(&buffer[0], bufferMaxLen);
-    
-    blockingPrint(std::string(&buffer[0], bufferMaxLen));
+    //blockingPrint(str::createMultiStr("Starting thread #", std::to_string(threadId), "..."));
+    try {
+        tinytcp::ConnectedSocket connect(host, port);
+        static const int bufferMaxLen = 4096;
+        std::array<char, bufferMaxLen> buffer = { 0 };
+
+        connect.putData(sendStr.c_str(), sendStr.size());
+        connect.getData(&buffer[0], bufferMaxLen);
+        blockingPrint(std::string(&buffer[0], bufferMaxLen));
+    }
+    catch(...) {
+        cout << "gna" << endl;
+    }
     
 //    std::string error;
 //    int clientfd = -1;

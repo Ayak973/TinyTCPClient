@@ -1,10 +1,28 @@
-all: tinyTCPClient
+CC=g++
+RM=rm -f
+CPPFLAGS=-c -Wall -g -pthread
+LDFLAGS=-g
+LDLIBS=-lpthread
+DEPS=stringhelper.h socket.h
 
-tinyTCPClient: main.o
-	g++ -Wall -std=c++14 -o tinyTCPClient main.o -lpthread
+SRCS=socket.cpp main.cpp
+OBJS=$(subst .cpp,.o,$(SRCS))
 
-tinytcpclient.o:main.cpp
-	g++ -Wall -std=c++14 -c main.cpp -lpthread
+all: main
+
+main: $(OBJS)
+	$(CC) $(LDFLAGS) -o tinytcpclient $(OBJS) $(LDLIBS)
+
+depend: .depend
+
+.depend: $(SRCS) $(DEPS)
+	$(RM) ./.depend
+	$(CC) $(CPPFLAGS) -MM $^>>./.depend;
 
 clean:
-	rm main.o tinyTCPClient
+	$(RM) $(OBJS)
+
+distclean: clean
+	$(RM) *~ .depend
+
+include .depend
