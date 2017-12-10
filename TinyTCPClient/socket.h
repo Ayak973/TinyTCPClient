@@ -19,7 +19,6 @@ namespace tinytcp {
             
         protected:
             Socket(int fd);
-            int getSocket() const;
             static constexpr int _fdInvalid = -1;
             
         public:
@@ -34,6 +33,7 @@ namespace tinytcp {
             Socket(Socket const&)                   = delete;
             Socket& operator=(Socket const&)        = delete;
             
+            int getSocket() const;
             void close();
     };
     
@@ -55,7 +55,7 @@ namespace tinytcp {
         protected:
             
         public:
-            TimedRWSocket(int fd);
+            TimedRWSocket(int fd, unsigned int readTimeout, unsigned int writeTimeout);
     };
     
     class ConnectedSocket : public TimedRWSocket {

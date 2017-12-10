@@ -26,9 +26,9 @@
 using std::cout;
 using std::endl;
 
-static const unsigned int parallelJobsCount = 40;
+static const unsigned int parallelJobsCount = 4;
 //string writed on socket
-static const std::string sendStr = "GET /index.html HTTP/1.1\r\nHost: notknownhost\r\nUser-Agent: TinyTCPClient alpha\r\n\r\n";
+static const std::string sendStr = "GET / HTTP/1.1\r\nHost: notknownhost\r\nUser-Agent: TinyTCPClient alpha\r\n\r\n";
 
 //std::cout synchronization
 std::mutex printMtx;
@@ -46,8 +46,8 @@ int main(int argc, char** argv) {
     std::string host(argv[1]);
     int port = std::stoi(argv[2]);
 #else
-    std::string host = "127.0.0.1";
-    int port = 8080;
+    std::string host = "192.168.31.254";
+    int port = 80;
 #endif
     
     cout << "Starting client..." << endl;
@@ -77,9 +77,10 @@ void sendAndReceive(unsigned int threadId, std::string host, int port) {
         std::array<char, bufferMaxLen> buffer = { 0 };
 
         connect.putData(sendStr.c_str(), sendStr.size());
-        connect.getData(&buffer[0], bufferMaxLen);
         
-        blockingPrint(str::createMultiStr("Recv: ", std::string(&buffer[0], bufferMaxLen)));
+        int rcvBytes = connect.getData(&buffer[0], bufferMaxLen);
+        
+        blockingPrint(str::createMultiStr("Recv ", rcvBytes, " bytes on fd ", connect.getSocket()));
     }
     catch(const std::exception& ex) {
         blockingPrint(str::createMultiStr("Exception thread #", threadId, ": ", ex.what()));

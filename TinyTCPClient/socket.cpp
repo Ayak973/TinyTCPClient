@@ -92,10 +92,13 @@ std::size_t RWSocket::getData(char* buffer, std::size_t maxLen) {
                     throw std::runtime_error(str::createMultiStr("RWSocket::", __func__, ": read resource failure: ", strerror(errno)));
                 case EINTR:
                 case ETIMEDOUT:
-                case EAGAIN:
                     continue;
                 case ECONNRESET:
                 case ENOTCONN:
+                    dataRead = 0;
+                    break;
+                case EWOULDBLOCK:
+                    //throw std::runtime_error(str::createMultiStr("RWSocket::", __func__, ": read timeout"));
                     dataRead = 0;
                     break;
                 default:
@@ -134,8 +137,10 @@ void RWSocket::putData(const char* buffer, std::size_t len) {
                 case ENOSPC:
                     throw std::runtime_error(str::createMultiStr("RWSocket::", __func__, ": write resource failure: ", strerror(errno)));
                 case EINTR:
-                case EAGAIN:
                     continue;
+                case EWOULDBLOCK:
+                    throw std::runtime_error(str::createMultiStr("RWSocket::", __func__, ": write timeout"));
+                    break;
                 default:
                     throw std::runtime_error(str::createMultiStr("RWSocket::", __func__, ": write returned -1: ", strerror(errno)));
                 
@@ -145,17 +150,21 @@ void RWSocket::putData(const char* buffer, std::size_t len) {
     }
 }
 
-TimedRWSocket::TimedRWSocket(int fd) : RWSocket(fd) {
-    struct timeval tv = { 0, 100 };
+TimedRWSocket::TimedRWSocket(int fd, unsigned int readTimeout, unsigned int writeTimeout) : RWSocket(fd) {
+    if (readTimeout > 0) {
+        struct timeval readTimeval = { readTimeout, writeTimeout };
+        if (setsockopt (fd, SOL_SOCKET, SO_RCVTIMEO, (timeval *)&readTimeval, sizeof(readTimeval)) < 0) 
+            throw std::runtime_error(str::createMultiStr("TimedReadSocket::", __func__, ": setsockopt read timeout failed: ", strerror(errno)));
+    }
     
-    if (setsockopt (fd, SOL_SOCKET, SO_RCVTIMEO, (timeval *)&tv, sizeof(tv)) < 0) 
-        throw std::runtime_error(str::createMultiStr("TimedReadSocket::", __func__, ": setsockopt read timeout failed: ", strerror(errno)));
-
-    if (setsockopt (fd, SOL_SOCKET, SO_SNDTIMEO, (timeval *)&tv, sizeof(tv)) < 0) 
-        throw std::runtime_error(str::createMultiStr("TimedReadSocket::", __func__, ": setsockopt write timeout failed: ", strerror(errno)));
+    if (writeTimeout > 0) {
+        struct timeval writeTimeval = { writeTimeout, writeTimeout };
+        if (setsockopt (fd, SOL_SOCKET, SO_SNDTIMEO, (timeval *)&writeTimeval, sizeof(writeTimeval)) < 0) 
+            throw std::runtime_error(str::createMultiStr("TimedReadSocket::", __func__, ": setsockopt write timeout failed: ", strerror(errno)));
+    }
 }
 
-ConnectedSocket::ConnectedSocket(const std::string& host, const int port) : TimedRWSocket(::socket(PF_INET, SOCK_STREAM, 0)) {
+ConnectedSocket::ConnectedSocket(const std::string& host, const int port) : TimedRWSocket(::socket(PF_INET, SOCK_STREAM, 0), 5, 0) {
     struct sockaddr_in server = { 0 };
     
     server.sin_family       = AF_INET;
