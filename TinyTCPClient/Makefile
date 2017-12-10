@@ -1,6 +1,6 @@
 CC=g++
 RM=rm -f
-CPPFLAGS=-c -Wall -g -pthread
+CPPFLAGS=-c -Wall -pthread
 LDFLAGS=-g
 LDLIBS=-lpthread
 DEPS=stringhelper.h socket.h
@@ -9,6 +9,9 @@ SRCS=socket.cpp main.cpp
 OBJS=$(subst .cpp,.o,$(SRCS))
 
 all: main
+
+debug: CPPFLAGS += -DDEBUG -g
+debug: main
 
 main: $(OBJS)
 	$(CC) $(LDFLAGS) -o tinytcpclient $(OBJS) $(LDLIBS)

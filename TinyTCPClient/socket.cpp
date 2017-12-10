@@ -145,8 +145,17 @@ void RWSocket::putData(const char* buffer, std::size_t len) {
     }
 }
 
+TimedRWSocket::TimedRWSocket(int fd) : RWSocket(fd) {
+    struct timeval tv = { 0, 100 };
+    
+    if (setsockopt (fd, SOL_SOCKET, SO_RCVTIMEO, (timeval *)&tv, sizeof(tv)) < 0) 
+        throw std::runtime_error(str::createMultiStr("TimedReadSocket::", __func__, ": setsockopt read timeout failed: ", strerror(errno)));
 
-ConnectedSocket::ConnectedSocket(const std::string& host, const int port) : RWSocket(::socket(PF_INET, SOCK_STREAM, 0)) {
+    if (setsockopt (fd, SOL_SOCKET, SO_SNDTIMEO, (timeval *)&tv, sizeof(tv)) < 0) 
+        throw std::runtime_error(str::createMultiStr("TimedReadSocket::", __func__, ": setsockopt write timeout failed: ", strerror(errno)));
+}
+
+ConnectedSocket::ConnectedSocket(const std::string& host, const int port) : TimedRWSocket(::socket(PF_INET, SOCK_STREAM, 0)) {
     struct sockaddr_in server = { 0 };
     
     server.sin_family       = AF_INET;
@@ -157,5 +166,6 @@ ConnectedSocket::ConnectedSocket(const std::string& host, const int port) : RWSo
         close();
         throw std::runtime_error(str::createMultiStr("ConnectedSocket::", __func__, ": connect failed: ", strerror(errno)));
     }
-    
 }
+
+

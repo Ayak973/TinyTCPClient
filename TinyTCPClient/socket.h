@@ -48,8 +48,17 @@ namespace tinytcp {
             std::size_t getData(char* buffer, std::size_t maxLen);
             void putData(const char* buffer, std::size_t len);
     };
+        
+    class TimedRWSocket : public RWSocket {
+        private:
+            
+        protected:
+            
+        public:
+            TimedRWSocket(int fd);
+    };
     
-    class ConnectedSocket : public RWSocket {
+    class ConnectedSocket : public TimedRWSocket {
         private:
         
         protected:

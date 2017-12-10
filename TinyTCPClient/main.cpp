@@ -20,26 +20,36 @@
 #include <unistd.h>
 
 //#include "socket.h"
-//#include "stringhelper.h"
+#include "stringhelper.h"
 #include "socket.h"
 
 using std::cout;
 using std::endl;
 
 static const unsigned int parallelJobsCount = 40;
-static const int port = 80;
-static const std::string host = "192.168.16.237";
+//string writed on socket
 static const std::string sendStr = "GET /index.html HTTP/1.1\r\nHost: notknownhost\r\nUser-Agent: TinyTCPClient alpha\r\n\r\n";
 
 //std::cout synchronization
 std::mutex printMtx;
 
-void sendAndReceive(unsigned int threadId);
-//int createSocketAndConnect(std::string& error);
-//int sendAll(int s, const char* buf, int &len);
+void sendAndReceive(unsigned int threadId, std::string host, int port);
 void blockingPrint(const std::string& str);
 
 int main(int argc, char** argv) {
+#ifndef DEBUG
+    if (argc < 3) {
+        cout << "usage: ./tinytcpclient host port" << endl;
+        return -1;
+    }
+    
+    std::string host(argv[1]);
+    int port = std::stoi(argv[2]);
+#else
+    std::string host = "127.0.0.1";
+    int port = 8080;
+#endif
+    
     cout << "Starting client..." << endl;
 
     //client parallel jobs array
@@ -47,7 +57,7 @@ int main(int argc, char** argv) {
     
     //starting threads
     for (unsigned int i = 0; i < parallelJobsCount; ++i) {
-        threadArray[i] = std::thread(sendAndReceive, i);
+        threadArray[i] = std::thread(sendAndReceive, i, host, port);
     }
 
     //waiting for threads to finish
@@ -60,8 +70,7 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-void sendAndReceive(unsigned int threadId) {
-    //blockingPrint(str::createMultiStr("Starting thread #", std::to_string(threadId), "..."));
+void sendAndReceive(unsigned int threadId, std::string host, int port) {
     try {
         tinytcp::ConnectedSocket connect(host, port);
         static const int bufferMaxLen = 4096;
@@ -69,74 +78,18 @@ void sendAndReceive(unsigned int threadId) {
 
         connect.putData(sendStr.c_str(), sendStr.size());
         connect.getData(&buffer[0], bufferMaxLen);
-        blockingPrint(std::string(&buffer[0], bufferMaxLen));
+        
+        blockingPrint(str::createMultiStr("Recv: ", std::string(&buffer[0], bufferMaxLen)));
+    }
+    catch(const std::exception& ex) {
+        blockingPrint(str::createMultiStr("Exception thread #", threadId, ": ", ex.what()));
     }
     catch(...) {
-        cout << "gna" << endl;
+        blockingPrint("Unknown exception...");
     }
-    
-//    std::string error;
-//    int clientfd = -1;
-//    
-//    clientfd = createSocketAndConnect(error);
-//    if (clientfd < 0) {
-//        blockingPrint("Thread #" + std::to_string(threadId) + " error: " + error + " !");
-//        return;
-//    }
-//    
-//    int sendLen = sendStr.length();
-//    
-//    if (sendAll(clientfd, sendStr.c_str(), sendLen) == -1) {
-//        blockingPrint("Thread #" + std::to_string(threadId) + " cannot sendAll !");
-//        return;
-//    }
-//    
-//    
-//    if (clientfd > -1) close(clientfd);
-    
-    blockingPrint("Thread #" + std::to_string(threadId) + " stopped !");
 }
-
-//int createSocketAndConnect(std::string& error) {
-//    int fd = ::socket(AF_INET , SOCK_STREAM , 0);
-//    
-//    if (fd < 0) {
-//        error = "cannot create socket";
-//        return -1;
-//    }
-//    
-//    struct sockaddr_in serverAddr = { 0 };
-//    serverAddr.sin_family       = AF_INET;
-//    serverAddr.sin_port         = htons(port);
-//    serverAddr.sin_addr.s_addr  = inet_addr(host.c_str());
-//    
-//    if (::connect(fd, (struct sockaddr*) &serverAddr, sizeof(struct sockaddr)) == -1) {
-//        ::close(fd);
-//        error = "connect() failed";
-//        return -1;        
-//    }
-//    
-//    return fd;
-//}
 
 void blockingPrint(const std::string& str) {
     std::lock_guard<std::mutex> lck(printMtx);
     cout << str << endl;
 }
-
-//int sendAll(int sock, const char* buf, int &len) {
-//    int total = 0;
-//    int bytesleft = len;
-//    int n;
-//    
-//    while (total < len && bytesleft > 0) {
-//        n = ::send(sock, buf + total, bytesleft, 0);
-//        if (n == -1) { break; }
-//        total += n;
-//        bytesleft -= n;
-//    }
-//    
-//    len = total;
-//    
-//    return (n == -1) ? -1 : 0;
-//}
