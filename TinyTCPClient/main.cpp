@@ -6,7 +6,7 @@
  * 
  * Inspired by https://github.com/Loki-Astari/Examples/blob/master/Version2/
  * 
- */
+ */ 
 
 #include <iostream>
 #include <string>
