@@ -19,7 +19,18 @@ namespace tinytcp {
             
         protected:
             Socket(int fd);
+            
+            
+#ifdef __linux
             static constexpr int _fdInvalid = -1;
+#elif WIN32
+            static constexpr SOCKET _fdInvalid = INVALID_SOCKET;
+#else
+            static constexpr int _fdInvalid = -1;
+            static_assert(false, "Plateforme inconnue !!");
+#endif
+            
+            
             
         public:
             virtual ~Socket();

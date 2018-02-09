@@ -13,8 +13,9 @@
 
 using namespace tinytcp;
 
+
 Socket::Socket(int fd) : _fd(fd) {
-    if (_fd < 0) {
+    if (_fd == _fdInvalid) {
         throw std::runtime_error(str::createMultiStr("Socket::", __func__, ": invalid socket ", strerror(errno)));
     }
 }
@@ -33,7 +34,7 @@ int Socket::getSocket() const {
 }
 
 void Socket::close() {
-    if (_fd < 0) {
+    if (_fd == _fdInvalid) {
         throw std::logic_error(str::createMultiStr("Socket::", __func__, ": cannot close an invalid socket"));
     }
     
@@ -98,7 +99,7 @@ std::size_t RWSocket::getData(char* buffer, std::size_t maxLen) {
                     dataRead = 0;
                     break;
                 case EWOULDBLOCK:
-                    //throw std::runtime_error(str::createMultiStr("RWSocket::", __func__, ": read timeout"));
+                    throw std::runtime_error(str::createMultiStr("RWSocket::", __func__, ": read timeout"));
                     dataRead = 0;
                     break;
                 default:

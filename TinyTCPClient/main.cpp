@@ -28,7 +28,7 @@ using std::endl;
 
 static const unsigned int parallelJobsCount = 4;
 //string writed on socket
-static const std::string sendStr = "GET / HTTP/1.1\r\nHost: notknownhost\r\nUser-Agent: TinyTCPClient alpha\r\n\r\n";
+static const std::string sendStr = "GET /localtest/ HTTP/1.1\r\nHost: notknownhost\r\nUser-Agent: TinyTCPClient alpha\r\n\r\n";
 
 //std::cout synchronization
 std::mutex printMtx;
@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     std::string host(argv[1]);
     int port = std::stoi(argv[2]);
 #else
-    std::string host = "192.168.31.254";
+    std::string host = "127.0.0.1";
     int port = 80;
 #endif
     
@@ -79,8 +79,13 @@ void sendAndReceive(unsigned int threadId, std::string host, int port) {
         connect.putData(sendStr.c_str(), sendStr.size());
         
         int rcvBytes = connect.getData(&buffer[0], bufferMaxLen);
-        
+
+#ifdef DEBUG
+        blockingPrint(str::createMultiStr("Recv ", rcvBytes, " bytes on fd ", connect.getSocket(), std::string(&buffer[0], rcvBytes)));
+#else
         blockingPrint(str::createMultiStr("Recv ", rcvBytes, " bytes on fd ", connect.getSocket()));
+#endif
+        
     }
     catch(const std::exception& ex) {
         blockingPrint(str::createMultiStr("Exception thread #", threadId, ": ", ex.what()));
